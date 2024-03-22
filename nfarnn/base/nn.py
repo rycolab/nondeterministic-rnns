@@ -6,7 +6,8 @@ def ReLU(x: np.ndarray) -> np.ndarray:
     
 def Log(x: np.ndarray) -> np.ndarray:
     """The log activation function."""
-    return np.log(x)
+    with np.errstate(divide='ignore'):
+        return np.log(x)
 
 def softmax(x: np.ndarray) -> np.ndarray:
     """The softmax projection."""

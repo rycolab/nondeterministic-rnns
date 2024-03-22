@@ -2,7 +2,7 @@ from math import log
 from typing import Callable, Optional, Tuple, Union
 import numpy as np
 
-from nfarnn.base.symbol import Sym
+from nfarnn.base.symbol import Sym, EOS
 from nfarnn.base.utils import to_compatible_string
 from nfarnn.base.nn import ReLU, Log, softmax, id_map, l1_normalize
 
@@ -66,15 +66,19 @@ class ElmanNetwork:
         logp = 0.0 
         h = self.h0
         p = self.π(self.F(self.E @ h))
+
         print(f"h0: {h}")
 
         for i, a in enumerate(s):
             y = self.sym_one_hot(a)
-            print(f"p{i}: {p}, y{i}: {y}")
-            
             logp += log(p[y.argmax()])
 
+            print(f"p{i}: {p}, y{i}: {y}")
+
+            if a == EOS:
+                break
             h, p = self(h, y)
+            
             print(f"h{i+1}:{h}")
 
         return logp
