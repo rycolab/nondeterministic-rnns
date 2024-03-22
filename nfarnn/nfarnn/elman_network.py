@@ -4,11 +4,9 @@ import numpy as np
 
 from nfarnn.base.symbol import Sym
 from nfarnn.base.utils import to_compatible_string
+from nfarnn.base.nn import ReLU, Log, softmax, id_map, l1_normalize
 
 class ElmanNetwork:
-    def ReLU(x: np.ndarray) -> np.ndarray:
-        """The ReLU function."""
-        return np.maximum(x, 0)
 
     def __init__(
         self,
@@ -17,23 +15,23 @@ class ElmanNetwork:
         b: np.ndarray,
         E: np.ndarray,
         h0: np.ndarray,
-        f: Callable[[np.ndarray], np.ndarray],
         one_hot: Callable[[Sym], np.ndarray],
         σ: Callable[[np.ndarray], np.ndarray] = ReLU,
-        n_applications: int = 1,
+        π: Callable[[np.ndarray], np.ndarray] = id_map,
+        F: Callable[[np.ndarray], np.ndarray] = id_map,
     ):
         """Implementation of an Elman network with the Heaviside non-linearity.
 
         DEFINITION
-        A Elman language model with the Heaviside non-linearity is a tuple
+        A Elman language model is a tuple
         • h0 is a D-dimensional initial vector;
         • U a D x D transition matrix;
         • V a D x |Σ| symbol matrix;
         • E a |Σ| x (D+1) emission matrix;
         • b a |Σ|-dimensional bias term.
-        • f is a projection function from the unnormalized scores to the normalized
-            local probability distribution over the next symbol.
         • σ is the hidden state activation function.
+        • π is a projection function from the unnormalized scores to the normalized
+            local probability distribution over the next symbol.
 
         Args:
             U (np.ndarray): The transition matrix.
@@ -42,12 +40,14 @@ class ElmanNetwork:
             E (np.ndarray): The emission matrix.
             h0 (np.ndarray): The initial hidden state.
             f (Callable[[np.ndarray], np.ndarray]): The projection function.
-            σ (Callable[[np.ndarray], np.ndarray], optional): The hidden state
-                activation function. Defaults to H (Heaviside).
             one_hot (Callable[Sym, np.ndarray]): The function that maps a symbol to its
                 one-hot encoding.
-            n_applications (int, optional): The number of times the Elman update step
-                is applied to the hidden state.
+            σ (Callable[[np.ndarray], np.ndarray], optional): The hidden state
+                activation function. Defaults to ReLU.
+            π (Callable[[np.ndarray], np.ndarray], optional): The output projection
+                function. Defaults to the identity function.    
+            F (Callable[[np.ndarray], np.ndarray], optional): A non-linear transformation
+                of the RNN output.
         """
 
         self.U = U
@@ -55,27 +55,27 @@ class ElmanNetwork:
         self.b = b
         self.E = E
         self.h0 = h0
-        self.f = f
         self.sym_one_hot = one_hot
         self.σ = σ
-        self.n_applications = n_applications
+        self.π = π
+        self.F = F
 
     def score(self, s: str) -> float:
         s = to_compatible_string(s)
 
         logp = 0.0 
         h = self.h0
-        p = self.E @ h
-        # print(f"h0: {h}")
+        p = self.π(self.F(self.E @ h))
+        print(f"h0: {h}")
 
         for i, a in enumerate(s):
             y = self.sym_one_hot(a)
-            # print(f"p{i}: {p}, y{i}: {y}")
+            print(f"p{i}: {p}, y{i}: {y}")
             
             logp += log(p[y.argmax()])
 
             h, p = self(h, y)
-            # print(f"h{i+1}:{h}")
+            print(f"h{i+1}:{h}")
 
         return logp
 
@@ -91,7 +91,10 @@ class ElmanNetwork:
 
             h = self.σ(np.dot(self.U, h) + np.dot(self.V, y) + self.b)
 
-        p = self.E @ h
-        p = p /  np.linalg.norm(p, 1, axis=0, keepdims=True) if np.any(p) else p
+        # Apply L1 normalization to the hidden state if no projection function is used
+        if self.π == id_map:
+            h = l1_normalize(h)
+
+        p = self.π(self.F(self.E @ h))
 
         return h, p

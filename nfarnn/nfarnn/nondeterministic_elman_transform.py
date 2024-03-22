@@ -8,10 +8,11 @@ from nfarnn.base.state import State
 from nfarnn.base.symbol import EOS, Sym
 from nfarnn.base.fsa import FSA
 from nfarnn.nfarnn.elman_network import ElmanNetwork
+from nfarnn.base.nn import ReLU, Log, softmax, id_map
 
 
 class NondeterministicElmanTransform:
-    def __init__(self, A: FSA) -> None:
+    def __init__(self, A: FSA, softmax_normalized=False) -> None:
         """The class performing the transformation of an FSA into a ReLU
         Elman RNN.
 
@@ -27,6 +28,7 @@ class NondeterministicElmanTransform:
         self.n_states, self.n_symbols = len(self.Q), len(self.Sigma)
 
         self.D = self.n_states * self.n_symbols
+        self.softmax_normalized=softmax_normalized
 
         self._construct()
 
@@ -135,7 +137,7 @@ class NondeterministicElmanTransform:
             b=self.b,
             E=self.E,
             h0=self.initial_state(),
-            f=lambda x: x,  # TODO
             one_hot=self.one_hot,
-            n_applications=1,
+            π=softmax if self.softmax_normalized else id_map,
+            F=Log if self.softmax_normalized else id_map
         )
