@@ -4,7 +4,7 @@ Code accompanying the NAACL 2024 publication "Lower Bounds on the Expressivity o
 
 ![image](https://github.com/rycolab/nondeterministic-rnns/assets/1191059/7316129a-7c45-4519-b93f-fc0def70f333)
 
-Caption (ChatGPT): ``Here's an original illustration inspired by the theme of your NAACL 2024 paper, "Lower Bounds on the Expressivity of Recurrent Neural Language Models". It captures the essence of exploring the limits and challenges in understanding or generating language through recurrent neural networks.''
+Caption (ChatGPT): "Here's an original illustration inspired by the theme of your NAACL 2024 paper, "Lower Bounds on the Expressivity of Recurrent Neural Language Models". It captures the essence of exploring the limits and challenges in understanding or generating language through recurrent neural networks."
 
 Getting started with the code
 Clone the repository:
