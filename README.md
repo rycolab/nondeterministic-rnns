@@ -1,4 +1,4 @@
-# nondeterministic-rnns
+# Lower Bounds on the Expressivity of Recurrent Neural Language Models
 
 Code accompanying the NAACL 2024 publication "Lower Bounds on the Expressivity of Recurrent Neural Language Models".
 
