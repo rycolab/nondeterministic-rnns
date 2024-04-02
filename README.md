@@ -1,6 +1,6 @@
 # nondeterministic-rnns
 
-Code accompanying the NAACL 2024 publication "A Bound on the Expressivity of Sparsemax Recurrent Language Models".
+Code accompanying the NAACL 2024 publication "Lower Bounds on the Expressivity of Recurrent Neural Language Models".
 
 Getting started with the code
 Clone the repository:
