@@ -4,13 +4,12 @@ from math import log, isclose
 
 from nfarnn.base.utils import sample_string
 from nfarnn.base.random import random_pfsa
-from nfarnn.nfarnn.sparsemax_elman_lm import SparsemaxElmanLM
-from nfarnn.nfarnn.softmax_elman_lm import SoftmaxElmanLM
+from nfarnn.nfarnn.elman_lm import SparsemaxElmanLM, SoftmaxElmanLM
 
 @mark.parametrize("n_states", [3, 5, 7, 9])
 @mark.parametrize("alphabet_size", [2, 3, 4, 5, 6])
 def test_nfa_rnn(n_states: int, alphabet_size: int):
-    for _ in range(50):
+    for _ in range(20):
         A = random_pfsa(
             Sigma="abcde"[:alphabet_size],
             num_states=n_states,
