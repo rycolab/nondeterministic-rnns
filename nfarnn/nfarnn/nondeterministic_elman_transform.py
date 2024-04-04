@@ -1,5 +1,5 @@
 from itertools import product
-from typing import Dict, List, Sequence, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -8,7 +8,7 @@ from nfarnn.base.state import State
 from nfarnn.base.symbol import EOS, Sym
 from nfarnn.base.fsa import FSA
 from nfarnn.nfarnn.elman_network import ElmanNetwork
-from nfarnn.base.nn import ReLU, Log, softmax, id_map
+from nfarnn.base.nn import ReLU, Log, softmax, id_map, l1_normalize
 
 
 class NondeterministicElmanTransform:
@@ -138,6 +138,7 @@ class NondeterministicElmanTransform:
             E=self.E,
             h0=self.initial_state(),
             one_hot=self.one_hot,
+            α=ReLU,
             π=softmax if self.softmax_normalized else id_map,
-            F=Log if self.softmax_normalized else id_map
+            F=Log if self.softmax_normalized else l1_normalize
         )

@@ -4,7 +4,7 @@ import numpy as np
 
 from nfarnn.base.symbol import Sym, EOS
 from nfarnn.base.utils import to_compatible_string
-from nfarnn.base.nn import ReLU, Log, softmax, id_map, l1_normalize
+from nfarnn.base.nn import ReLU, id_map
 
 class ElmanNetwork:
 
@@ -16,7 +16,7 @@ class ElmanNetwork:
         E: np.ndarray,
         h0: np.ndarray,
         one_hot: Callable[[Sym], np.ndarray],
-        σ: Callable[[np.ndarray], np.ndarray] = ReLU,
+        α: Callable[[np.ndarray], np.ndarray] = ReLU,
         π: Callable[[np.ndarray], np.ndarray] = id_map,
         F: Callable[[np.ndarray], np.ndarray] = id_map,
     ):
@@ -29,7 +29,7 @@ class ElmanNetwork:
         • V a D x |Σ| symbol matrix;
         • E a |Σ| x (D+1) emission matrix;
         • b a |Σ|-dimensional bias term.
-        • σ is the hidden state activation function.
+        • α is the hidden state activation function.
         • π is a projection function from the unnormalized scores to the normalized
             local probability distribution over the next symbol.
 
@@ -42,7 +42,7 @@ class ElmanNetwork:
             f (Callable[[np.ndarray], np.ndarray]): The projection function.
             one_hot (Callable[Sym, np.ndarray]): The function that maps a symbol to its
                 one-hot encoding.
-            σ (Callable[[np.ndarray], np.ndarray], optional): The hidden state
+            α (Callable[[np.ndarray], np.ndarray], optional): The hidden state
                 activation function. Defaults to ReLU.
             π (Callable[[np.ndarray], np.ndarray], optional): The output projection
                 function. Defaults to the identity function.    
@@ -56,7 +56,7 @@ class ElmanNetwork:
         self.E = E
         self.h0 = h0
         self.sym_one_hot = one_hot
-        self.σ = σ
+        self.α = α
         self.π = π
         self.F = F
 
@@ -93,11 +93,7 @@ class ElmanNetwork:
             if isinstance(y, Sym):
                 y = self.sym_one_hot(y)
 
-            h = self.σ(np.dot(self.U, h) + np.dot(self.V, y) + self.b)
-
-        # Apply L1 normalization to the hidden state if no projection function is used
-        if self.π == id_map:
-            h = l1_normalize(h)
+            h = self.α(np.dot(self.U, h) + np.dot(self.V, y) + self.b)
 
         p = self.π(self.F(self.E @ h))
 
