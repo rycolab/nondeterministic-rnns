@@ -8,16 +8,15 @@ from nfarnn.base.state import State
 from nfarnn.base.symbol import EOS, Sym
 from nfarnn.base.fsa import FSA
 from nfarnn.nfarnn.elman_network import ElmanNetwork
-from nfarnn.base.nn import ReLU, Log, softmax, id_map, l1_normalize
+from nfarnn.base.nn import ReLU
 
 
 class NondeterministicElmanTransform:
     def __init__(self, A: FSA, softmax_normalized=False) -> None:
-        """The class performing the transformation of an FSA into a ReLU
-        Elman RNN.
+        """The class performing the transformation of an FSA into a ReLU Elman RNN.
 
         Args:
-            A (FSA): The FSA to be transformed.
+            A (FSA): The PFSA to be transformed.
         """
         assert A.R == Real
 
@@ -40,7 +39,15 @@ class NondeterministicElmanTransform:
             h[self.n[(a, q)]] = float(w)
 
         return h
-
+    
+    def one_hot(self, x: Union[str, Sym]) -> np.ndarray:
+        if isinstance(x, str):
+            x = Sym(x)
+        if not x in self.SigmaEOS:
+            raise ValueError(f"Unknown symbol {x}")
+        y = np.zeros((self.n_symbols + 1))
+        y[self.m[x]] = 1
+        return y
 
     def _set_up_orderings(self):
         self.s = dict()
@@ -57,25 +64,6 @@ class NondeterministicElmanTransform:
 
         self.m = {y: i for i, y in enumerate(self.SigmaEOS)}
         self.m_inv = {i: y for i, y in enumerate(self.SigmaEOS)}
-
-    def one_hot(self, x: Union[State, str, Sym, Tuple[State, Sym]]) -> np.ndarray:
-        if isinstance(x, str):
-            x = Sym(x)
-
-        if isinstance(x, Sym):
-            y = np.zeros((self.n_symbols+1))
-            y[self.m[x]] = 1
-            return y
-        elif isinstance(x, State):
-            y = np.zeros((self.n_states))
-            y[self.s[x]] = 1
-            return y
-        elif isinstance(x, tuple):
-            y = np.zeros((self.n_states * self.n_symbols))
-            y[self.n[x]] = 1
-            return y
-        else:
-            raise TypeError
 
     def _construct(self):
         self._set_up_orderings()
@@ -115,7 +103,7 @@ class NondeterministicElmanTransform:
 
     def _make_b(self):
         # The non-active copied probabilities from Step 1 will be removed
-        # This acts as a selector of the correct transition, in a sense
+        # This acts as a selector of the correct transition for the observed symbol
         # (this relies on the largest possible weight being 1)
         self.b = -np.ones(self.D)
 
@@ -132,13 +120,8 @@ class NondeterministicElmanTransform:
 
     def _make_rnn(self):
         self.R = ElmanNetwork(
+            h0=self.initial_state(),
             U=self.U,
             V=self.V,
-            b=self.b,
-            E=self.E,
-            h0=self.initial_state(),
-            one_hot=self.one_hot,
-            α=ReLU,
-            π=softmax if self.softmax_normalized else id_map,
-            F=Log if self.softmax_normalized else l1_normalize
+            b=self.b
         )
